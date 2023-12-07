@@ -25,3 +25,4 @@ jobs:
       - name: Gradle Build
         runs: |
           ./gradlew build --parallel
+
