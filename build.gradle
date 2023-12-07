@@ -144,3 +144,8 @@ spotless {
         endWithNewline() // 마지막 줄은 공백으로 남아있게하는 옵션
     }
 }
+
+tasks.register("addGitPreCommitHook", Copy) {
+    from 'script/pre-commit'
+    into '.git/hooks'
+}
