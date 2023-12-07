@@ -23,7 +23,7 @@ jobs:
           cache: 'gradle'
 
       - name: Gradle Build
-        runs: |
+        run: |
           ./gradlew build --parallel
       - name: Coverage Report
         uses: madrapps/jacoco-report@v1.6.1
