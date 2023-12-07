@@ -15,7 +15,17 @@ jobs:
     steps:
       - name: Git Checkout
         uses: actions/checkout@v3.0.2
+
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            application:
+            - 'build.gradle'
+            - 'src/**'
+
       - name: JDK 설치
+        if: steps.changes.outputs.application == 'true'
         uses: actions/setup-java@v3
         with:
           java-version: 17
@@ -23,9 +33,11 @@ jobs:
           cache: 'gradle'
 
       - name: Gradle Build
+        if: steps.changes.outputs.application == 'true'
         run: |
           ./gradlew build --parallel
       - name: Coverage Report
+        if: steps.changes.outputs.application == 'true'
         uses: madrapps/jacoco-report@v1.6.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -41,12 +53,22 @@ jobs:
     steps:
       - name: Git Checkout
         uses: actions/checkout@v3.0.2
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            application:
+              - 'build.gradle'
+              - 'src/**'
+
       - name: JDK 설치
+        if: steps.changes.outputs.application == 'true'
         uses: actions/setup-java@v3
         with:
           java-version: 17
           distribution: zulu
           cache: 'gradle'
       - name: Style Check
+        if: steps.changes.outputs.application == 'true'
         run: |
           ./gradlew spotlessCheck
