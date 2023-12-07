@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  local-db:
+    image: mysql:8.0 # mysql:8 대신, mysql:8.0을 사용해주세요!
+    environment:
+      MYSQL_DATABASE: score
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - 3306:3306
+    volumes:
+      - ./dbdata:/var/lib/mysql
+  local-db-migrate:
+    image: flyway/flyway:7
+    restart: always
+    environment:
+      - FLYWAY_DB_URL=jdbc:mysql://local-db/score
+      - FLYWAY_DB_USER=root
+      - FLYWAY_DB_PASSWORD=password
+    command: migrate
+    volumes:
+      - ../../db/flyway.conf:/flyway/conf/flyway.conf
+      - ../../db/migration:/flyway/sql
+  local-redis:
+    image: redis:6
+    ports:
+      - 6379:6379
+  local-aws:
+    image: localstack/localstack:1.2
+    environment:
+      - SERVICES=s3
+      - PORT_WEB_UI=4567
+      - AWS_DEFAULT_REGION=ap-northeast-2
+      - USE_SSL=0
+    ports:
+      - 4566:4566

@@ -1,0 +1,146 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.2.0'
+    id 'io.spring.dependency-management' version '1.1.4'
+    id 'jacoco'
+    id 'org.sonarqube' version '4.0.0.2929'
+    id 'com.diffplug.spotless' version '6.21.0'
+}
+
+group = 'com.bsj.dayonetest'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = '17'
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    runtimeOnly 'com.mysql:mysql-connector-j'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    testImplementation "org.mockito:mockito-core:4.8.1"
+    testImplementation 'org.testcontainers:testcontainers:1.19.3'
+    implementation platform('org.testcontainers:testcontainers-bom:1.19.3')
+
+    // Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    testImplementation "com.redis.testcontainers:testcontainers-redis-junit:1.6.4"
+
+    // AWS
+    implementation(platform("software.amazon.awssdk:bom:2.20.136"))
+    implementation("commons-io:commons-io:2.13.0")
+    implementation("software.amazon.awssdk:aws-core")
+    implementation("software.amazon.awssdk:sdk-core")
+    implementation("software.amazon.awssdk:sts")
+    implementation("software.amazon.awssdk:s3")
+    testImplementation("org.testcontainers:localstack:1.19.0")
+
+    // Kafka
+    implementation("org.springframework.kafka:spring-kafka")
+    testImplementation("org.testcontainers:kafka:1.19.3")
+    testImplementation "org.springframework.kafka:spring-kafka-test"
+
+    testImplementation 'com.tngtech.archunit:archunit:1.1.0'
+
+    // JUnit
+    testImplementation "org.junit.jupiter:junit-jupiter-engine:5.10.1"
+    testImplementation(platform("org.junit:junit-bom:5.10.1"))
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher") {
+        because("Only needed to run tests in a version of IntelliJ IDEA that bundles older versions")
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+
+    jacoco {}
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+jacoco {
+    toolVersion = "0.8.8"
+}
+
+tasks.jacocoTestReport {
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = true
+
+        xml.destination(file("build/jacoco/jacoco.xml"))
+        html.destination(file("build/jacoco/jacoco.html"))
+    }
+
+    finalizedBy(tasks.jacocoTestCoverageVerification)
+}
+
+tasks.jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            enabled = true
+            element = "CLASS"
+
+            // 소스코드의 50% 이상 라인을 커버
+            limit {
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = BigDecimal.valueOf(0.3)
+            }
+
+            // 한 클래스는 300줄로 제한된다
+            limit {
+                counter = "LINE"
+                value = "TOTALCOUNT"
+                maximum = BigDecimal.valueOf(300)
+            }
+
+            excludes = List.of(
+                    "*.test.*",
+                    "*.controller.*",
+                    "com.bsj.dayonetest.MyCalculatorApplication",
+                    "com.bsj.dayonetest.DayonetestApplication",
+            )
+        }
+
+    }
+}
+
+sonar {
+    properties {
+        property("sonar.host.url", "http://localhost:9000")
+        property("sonar.login", "sqp_1a960ebf2101edb888450853d46c2b9db3451942")
+        property("sonar.sources", "src/main/java")
+        property("sonar.tests", "src/test/java")
+        property("sonar.sourceEncoding", "UTF-8")
+        property("sonar.projectKey", "dayonetest")
+        property("sonar.projectName", "dayonetest")
+        property("sonar.coverage.jacoco.xmlReportPaths", "build/jacoco/jacoco.xml")
+    }
+}
+
+
+spotless {
+    java {
+        googleJavaFormat()
+
+        removeUnusedImports() // 쓰지 않는 imports 제거 옵션
+        trimTrailingWhitespace() // 불필요 공백 없애주는 옵션
+        indentWithSpaces(4) // 들여쓰기를 탭이 아닌 띄어쓰기로 바꿔주는 옵션
+        endWithNewline() // 마지막 줄은 공백으로 남아있게하는 옵션
+    }
+}
