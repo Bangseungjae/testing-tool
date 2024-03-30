@@ -1,1 +1,1 @@
-Hello World
+김상수 바보
